@@ -29,6 +29,7 @@ pub enum Format {
     Png,
     Jpeg,
     WebP,
+    Avif,
     Original,
 }
 
@@ -36,6 +37,7 @@ pub enum Format {
 pub enum EnabledUpscaler {
     Waifu2x,
     Realcugan,
+    Lanczos3,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
