@@ -2,6 +2,7 @@ use std::io::Cursor;
 use std::sync::Arc;
 
 use bytes::Bytes;
+use image::imageops::FilterType;
 use image::{DynamicImage, ImageFormat};
 use log::info;
 use realcugan_ncnn_vulkan_rs::RealCugan;
@@ -40,10 +41,11 @@ pub trait Upscaler: Send {
         let mut buf = Cursor::new(Vec::new());
 
         let format_to = match config.return_format {
-            Format::Png => { ImageFormat::Png }
-            Format::Jpeg => { ImageFormat::Jpeg }
-            Format::WebP => { ImageFormat::WebP }
-            Format::Original => { image_format }
+            Format::Png => ImageFormat::Png,
+            Format::Jpeg => ImageFormat::Jpeg,
+            Format::WebP => ImageFormat::WebP,
+            Format::Avif => ImageFormat::Avif, // AVIF 出力に対応
+            Format::Original => image_format,
         };
 
         upscaled.write_to(&mut buf, format_to).expect("can't write image");
@@ -63,6 +65,12 @@ pub struct Waifu2xUpscaler {
 pub struct RealCuganUpscaler {
     config: UpscalerConfig,
     realcugan: RealCugan,
+}
+
+// --- Lanczos3 構造体を追加 ---
+pub struct Lanczos3Upscaler {
+    config: UpscalerConfig,
+    scale: u32,
 }
 
 impl Waifu2xUpscaler {
@@ -117,6 +125,22 @@ impl RealCuganUpscaler {
     }
 }
 
+// --- Lanczos3 のコンストラクタ ---
+impl Lanczos3Upscaler {
+    pub fn new(config: Arc<AppConfig>) -> Self {
+        let upscaler_config = UpscalerConfig {
+            threshold_enabled: config.size_threshold_enabled,
+            threshold: config.size_threshold,
+            threshold_png: config.size_threshold_png,
+            return_format: config.return_format,
+        };
+
+        Self {
+            config: upscaler_config,
+            scale: 2, // 2倍拡大
+        }
+    }
+}
 
 impl Upscaler for Waifu2xUpscaler {
     fn upscale_image(&self, image: DynamicImage) -> DynamicImage {
@@ -131,6 +155,19 @@ impl Upscaler for Waifu2xUpscaler {
 impl Upscaler for RealCuganUpscaler {
     fn upscale_image(&self, image: DynamicImage) -> DynamicImage {
         self.realcugan.proc_image(image)
+    }
+
+    fn get_config(&self) -> UpscalerConfig {
+        self.config
+    }
+}
+
+// --- Lanczos3 の画像リサイズ実装（CPU処理） ---
+impl Upscaler for Lanczos3Upscaler {
+    fn upscale_image(&self, image: DynamicImage) -> DynamicImage {
+        let width = image.width() * self.scale;
+        let height = image.height() * self.scale;
+        image.resize_exact(width, height, FilterType::Lanczos3)
     }
 
     fn get_config(&self) -> UpscalerConfig {
