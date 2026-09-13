@@ -135,6 +135,7 @@ fn to_response(
         ImageFormat::Png => { Some(("image/png", "png")) }
         ImageFormat::Jpeg => { Some(("image/jpeg", "jpeg")) }
         ImageFormat::WebP => { Some(("image/webp", "webp")) }
+        ImageFormat::Avif => { Some(("image/avif", "avif")) }
         _ => { None }
     };
     let mut builder = Response::builder();
