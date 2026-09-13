@@ -6,12 +6,13 @@ WORKDIR /app
 # ソースコード一式をコピー
 COPY . .
 
-# C++コンパイラやcmake、OpenSSL関連を導入してリリースビルド
+# nasm を追加（AVIFエンコーダ rav1e のビルドに必須）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     pkg-config \
     libssl-dev \
+    nasm \
     && rm -rf /var/lib/apt/lists/* \
     && cargo build --release
 
