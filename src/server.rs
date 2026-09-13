@@ -38,9 +38,15 @@ fn make_routes(state: AppState) -> Router {
     let config = state.config.clone();
 
     let mut routes = Router::new()
+        // Komga
         .route("/api/v1/books/:book_id/pages/:page_number", get(upscale_komga))
+        // Kavita (ルート直下 & /kavita プレフィックス両対応)
         .route("/api/reader/image", get(upscale_kavita))
+        .route("/kavita/api/reader/image", get(upscale_kavita))
+        // WebSocket
         .route("/hubs/messages", get(kavita_ws_proxy_handler))
+        .route("/kavita/hubs/messages", get(kavita_ws_proxy_handler))
+        // Fallback
         .route("/", any(proxy_handler))
         .route("/*any", any(proxy_handler));
 
