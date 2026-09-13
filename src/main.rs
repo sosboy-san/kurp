@@ -55,7 +55,7 @@ async fn main() {
 
 
         let upstream_url = Uri::from_str(config.upstream_url.as_str()).unwrap();
-        let upstream_url_str = upstream_url.to_string().strip_suffix("/").unwrap().to_string();
+        let upstream_url_str = upstream_url.to_string().trim_end_matches('/').to_string();
         let komga_client = Arc::new(KomgaClient::new(reqwest_client.clone(), upstream_url_str.clone()));
         let kavita_client = Arc::new(KavitaClient::new(reqwest_client.clone(), upstream_url_str.clone()));
 
@@ -72,7 +72,7 @@ async fn main() {
             .authority(upstream_url.authority().unwrap().as_str())
             .path_and_query(upstream_url.path())
             .build().unwrap();
-        let ws_url_str = ws_url.to_string().strip_suffix("/").unwrap().to_string();
+        let ws_url_str = ws_url.to_string().trim_end_matches('/').to_string();
         let websocket_proxy_client = WebsocketProxyClient::new(ws_url_str);
 
         let state = AppState {
