@@ -5,8 +5,6 @@ use bytes::Bytes;
 use image::imageops::FilterType;
 use image::{DynamicImage, ImageFormat};
 use log::info;
-use realcugan_ncnn_vulkan_rs::RealCugan;
-use waifu2x_ncnn_vulkan_rs::Waifu2x;
 
 use crate::config::app_config::{AppConfig, Format};
 
@@ -44,7 +42,7 @@ pub trait Upscaler: Send {
             Format::Png => ImageFormat::Png,
             Format::Jpeg => ImageFormat::Jpeg,
             Format::WebP => ImageFormat::WebP,
-            Format::Avif => ImageFormat::Avif, // AVIF 出力に対応
+            Format::Avif => ImageFormat::Avif,
             Format::Original => image_format,
         };
 
@@ -57,75 +55,11 @@ pub trait Upscaler: Send {
     fn get_config(&self) -> UpscalerConfig;
 }
 
-pub struct Waifu2xUpscaler {
-    config: UpscalerConfig,
-    waifu2x: Waifu2x,
-}
-
-pub struct RealCuganUpscaler {
-    config: UpscalerConfig,
-    realcugan: RealCugan,
-}
-
-// --- Lanczos3 構造体を追加 ---
 pub struct Lanczos3Upscaler {
     config: UpscalerConfig,
     scale: u32,
 }
 
-impl Waifu2xUpscaler {
-    pub fn new(config: Arc<AppConfig>) -> Self {
-        let waifu2x = Waifu2x::new(
-            config.waifu2x.gpuid,
-            config.waifu2x.noise,
-            config.waifu2x.scale,
-            config.waifu2x.model,
-            config.waifu2x.tile_size,
-            config.waifu2x.tta_mode,
-            config.waifu2x.num_threads,
-            config.waifu2x.models_path.clone(),
-        );
-
-        let upscaler_config = UpscalerConfig {
-            threshold_enabled: config.size_threshold_enabled,
-            threshold: config.size_threshold,
-            threshold_png: config.size_threshold_png,
-            return_format: config.return_format,
-        };
-
-        Self { config: upscaler_config, waifu2x }
-    }
-}
-
-impl RealCuganUpscaler {
-    pub fn new(config: Arc<AppConfig>) -> Self {
-        let realcugan = RealCugan::new(
-            config.realcugan.gpuid,
-            config.realcugan.noise,
-            config.realcugan.scale,
-            config.realcugan.model,
-            config.realcugan.tile_size,
-            config.realcugan.sync_gap,
-            config.realcugan.tta_mode,
-            config.realcugan.num_threads,
-            config.realcugan.models_path.clone(),
-        );
-
-        let upscaler_config = UpscalerConfig {
-            threshold_enabled: config.size_threshold_enabled,
-            threshold: config.size_threshold,
-            threshold_png: config.size_threshold_png,
-            return_format: config.return_format,
-        };
-
-        Self {
-            config: upscaler_config,
-            realcugan,
-        }
-    }
-}
-
-// --- Lanczos3 のコンストラクタ ---
 impl Lanczos3Upscaler {
     pub fn new(config: Arc<AppConfig>) -> Self {
         let upscaler_config = UpscalerConfig {
@@ -137,32 +71,11 @@ impl Lanczos3Upscaler {
 
         Self {
             config: upscaler_config,
-            scale: 2, // 2倍拡大
+            scale: 2,
         }
     }
 }
 
-impl Upscaler for Waifu2xUpscaler {
-    fn upscale_image(&self, image: DynamicImage) -> DynamicImage {
-        self.waifu2x.proc_image(image)
-    }
-
-    fn get_config(&self) -> UpscalerConfig {
-        self.config
-    }
-}
-
-impl Upscaler for RealCuganUpscaler {
-    fn upscale_image(&self, image: DynamicImage) -> DynamicImage {
-        self.realcugan.proc_image(image)
-    }
-
-    fn get_config(&self) -> UpscalerConfig {
-        self.config
-    }
-}
-
-// --- Lanczos3 の画像リサイズ実装（CPU処理） ---
 impl Upscaler for Lanczos3Upscaler {
     fn upscale_image(&self, image: DynamicImage) -> DynamicImage {
         let width = image.width() * self.scale;
