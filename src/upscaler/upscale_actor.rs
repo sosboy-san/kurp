@@ -5,10 +5,10 @@ use image::ImageFormat;
 use log::{error, info};
 use ractor::{Actor, ActorProcessingErr, ActorRef, RpcReplyPort, SupervisionEvent};
 
-use EnabledUpscaler::{Realcugan, Waifu2x};
+use EnabledUpscaler::{Lanczos3, Realcugan, Waifu2x};
 
 use crate::config::app_config::{AppConfig, EnabledUpscaler};
-use crate::upscaler::upscaler::{RealCuganUpscaler, Upscaler, Waifu2xUpscaler};
+use crate::upscaler::upscaler::{Lanczos3Upscaler, RealCuganUpscaler, Upscaler, Waifu2xUpscaler};
 
 pub enum UpscaleSupervisorMessage {
     Upscale(Bytes, ImageFormat, RpcReplyPort<(Bytes, ImageFormat)>),
@@ -112,7 +112,8 @@ impl Actor for UpscaleActor {
     async fn pre_start(&self, _myself: ActorRef<Self>, args: Self::Arguments) -> Result<Self::State, ActorProcessingErr> {
         let upscaler: Box<dyn Upscaler> = match args.upscaler {
             Waifu2x => Box::new(Waifu2xUpscaler::new(args.clone())),
-            Realcugan => Box::new(RealCuganUpscaler::new(args.clone()))
+            Realcugan => Box::new(RealCuganUpscaler::new(args.clone())),
+            Lanczos3 => Box::new(Lanczos3Upscaler::new(args.clone())), // 追加
         };
 
         Ok(upscaler)
