@@ -6,14 +6,16 @@ WORKDIR /app
 # ソースコード一式をコピー
 COPY . .
 
-# ビルドに必要なツールを最小限インストールしてリリースビルド
+# C++コンパイラやcmake、OpenSSL関連を導入してリリースビルド
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
     pkg-config \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/* \
     && cargo build --release
 
-# --- 実行ステージ（GPU不要・超軽量） ---
+# --- 実行ステージ（超軽量・GPU不要） ---
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
