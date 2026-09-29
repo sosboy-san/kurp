@@ -1,3 +1,8 @@
+> ⚠️ **NOTICE: This is a personal sandbox repository for experimentation. It may not work properly. The original repository is located here: [Snd-R/kurp](https://github.com)**
+
+---
+
+
 # Komga and Kavita upscaling reverse proxy
 
 Reverse proxy that intercepts image requests and applies upscaling. Other requests are transparently proxied
